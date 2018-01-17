@@ -11,6 +11,7 @@ import com.wagnerandade.coollection.query.order.Order;
 import com.wagnerandade.coollection.query.order.OrderCriteria;
 import com.wagnerandade.coollection.query.specification.custom.AndSpecification;
 import com.wagnerandade.coollection.query.specification.custom.OrSpecification;
+import com.wagnerandade.coollection.reflection.Phanton;
 
 public class Query<T> {
 
@@ -42,7 +43,7 @@ public class Query<T> {
 		criterias.add(criteria);
 		return this;
 	}
-	
+
 	public Query<T> orderBy(String method, Order order) {
 		orderCriteria = new OrderCriteria<T>(method, order);
 		return this;
@@ -50,6 +51,17 @@ public class Query<T> {
 
 	public Query<T> orderBy(String method) {
 		return orderBy(method, Order.ASC);
+	}
+	
+	public Query<T> order(Order orderDirection)
+	{
+		orderCriteria = new OrderCriteria<T>("", orderDirection);
+		return this;
+	}
+	
+	public Query<T> order()
+	{
+		return order(Order.ASC);
 	}
 
 	public List<T> all() {
@@ -63,6 +75,60 @@ public class Query<T> {
 			all = orderCriteria.sort(all);
 		}
 		return all;
+	}
+
+	public <R> List<R> all(String method)
+	{
+		List<T> all = all();
+		ArrayList<R> selectresult = new ArrayList<R>();
+		for(T item : all)
+		{
+			R value = (R)Phanton.from(item).call(method);
+			if(value != null)
+				selectresult.add(value);
+		}
+		return selectresult;
+	}
+	
+	public <R> Query<R> select(String method)
+	{
+		List<T> all = all();
+		ArrayList<R> selectresult = new ArrayList<R>();
+		for(T item : all)
+		{
+			R value = (R)Phanton.from(item).call(method);
+			if(value != null)
+				selectresult.add(value);
+		}
+		return new Query<R>(selectresult);
+	}
+	
+	// Only works with
+	public <R> Query<R> flatten()
+	{
+		ArrayList<R> flattenList = new ArrayList<R>();
+		List<T> all = all();
+		for(T items : all)
+		{
+			Collection<R> itemC = (Collection<R>) items;
+			for(R item : itemC)
+			{
+				flattenList.add(item);
+			}
+		}
+		return new Query<R>(flattenList);
+	}
+	
+	// Return only unique elements
+	public Query<T> unique()
+	{
+		ArrayList<T> uniqueList = new ArrayList<T>();
+		for(T item : all())
+		{
+			if(uniqueList.contains(item) == false)
+				uniqueList.add(item);
+		}
+		return new Query<T>(uniqueList);
 	}
 
 	public T first() {

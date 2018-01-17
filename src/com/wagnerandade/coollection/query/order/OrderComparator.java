@@ -15,8 +15,16 @@ public class OrderComparator<T> implements Comparator<T> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public int compare(T one, T other) {
-		Object oneValue = Phanton.from(one).call(method);
-		Object otherValue = Phanton.from(other).call(method);
+		// Pre-initialize values with parameters
+		Object oneValue = one;
+		Object otherValue = other;
+		// If method was provided, inject parameter value
+		// in the objects to be compared
+		if(method.length()> 0)
+		{
+			oneValue = Phanton.from(one).call(method);
+			otherValue = Phanton.from(other).call(method);			
+		}
 		if(oneValue == null || otherValue == null) {
 			return 0;
 		}
